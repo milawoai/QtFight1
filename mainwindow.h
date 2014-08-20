@@ -2,9 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTime>
+#include <QSystemTrayIcon>
+#include "Dialogforqsystemtrayicon.h"
 #include "mysignalmapper.h"
 #include "qsonaction.h"
-#include <QMap>
 #include "addlabdialog.h"
 
 namespace Ui {
@@ -14,6 +16,8 @@ class MainWindow;
 class MdiChild;
 class QMdiSubWindow;
 class QSignalMapper;
+class NewWord;
+class QDir;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -23,6 +27,8 @@ public:
     ~MainWindow();
 
 protected:
+    void keyPressEvent(QKeyEvent* event);
+    void timerEvent(QTimerEvent *event);
     void closeEvent(QCloseEvent *event);  // 关闭事件
     void ChangReadRecio(QList<QString> &StringList,QMenu* Menu,QString str);
     QAction* MainWindow::WriterRecio(QStringList::const_iterator& iter, QStringList::const_iterator iterend, QAction* &Parent);
@@ -44,6 +50,8 @@ private slots:
     void setActiveSubWindow(QWidget *window); // 设置活动子窗口
 
     void AddToMdiChild(QStringList);
+
+    void onSystemTrayIconClicked(QSystemTrayIcon::ActivationReason reason);
 
     void on_actionOpen_triggered();
 
@@ -83,6 +91,12 @@ private slots:
 
     void on_actionAddLab_triggered();
 
+    void on_actionWordCard_triggered();
+
+    void setTheTrayResult(bool);
+
+    void on_action_triggered();
+
 private:
     Ui::MainWindow *ui;
     QAction *actionSeparator;    //分隔符
@@ -97,10 +111,20 @@ private:
     //QMap<QAction*,QString> ActionToString;
     QList<QSonAction*> SonActionList;
     AddLabDialog* myAddLab;
+    NewWord *newLabel;
+    int id_GetZhengDian;
+    int  id_Hour;
+    QSystemTrayIcon *trayicon;
+    QMenu *trayiconMenu;
+    QDir *DataDir;
+
+    bool TrayResult;
 
     void readSettings();  // 读取窗口设置
     void writeSettings(); // 写入窗口设置
     void initWindow(); // 初始化窗口
+
+    QAction* trayiconQuit;
 };
 
 #endif // MAINWINDOW_H

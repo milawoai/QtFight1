@@ -9,6 +9,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv); 
+    a.setWindowIcon(QIcon(":/myImage/images/1.ico"));
 //    QDir dir=directoryOf("Resource");
 //    QStringList filter;
 //    filter<<"*.jpg";

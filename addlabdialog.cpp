@@ -24,11 +24,14 @@ void AddLabDialog::getLabelDisplay(QList<QString> str)
     QString strTemp;
     QStandardItemModel * model   = new QStandardItemModel(ui->LabeltreeView);
     QMap<QString, QStandardItem*> map;
+    QStandardItem* ItemRoot = new QStandardItem("Root");
+    model->appendRow(ItemRoot);
     foreach (strTemp, str)
     {
         QStringList temp1 = strTemp.split("\\");
         QString strT;
         bool isfirst = true;
+        bool HaveCreate = false;
         QStandardItem* regist = NULL;
         QStandardItem* itemProject = NULL;
         foreach(strT,temp1)
@@ -44,17 +47,24 @@ void AddLabDialog::getLabelDisplay(QList<QString> str)
             else
             {
                 itemProject = map[strIn];
+                HaveCreate = true;
             }
             if(isfirst)
             {
-                model->appendRow(itemProject);
+                if(!HaveCreate)
+                {
+                    ItemRoot->appendRow(itemProject);
+                }
+
                 isfirst = false;
+
             }
             else
             {
                 regist->appendRow(itemProject);
             }
             regist = itemProject;
+            HaveCreate = false;
         }
     }
     ui->LabeltreeView -> setModel( model );
@@ -66,18 +76,39 @@ void AddLabDialog::on_LabeltreeView_clicked(const QModelIndex &index)
     strOut.clear();
     QString str;
     QModelIndex indexP = index;
+    CurrentIndex = index;
     QModelIndex indexRegiste = index.parent();
+    QStringList Child;
 
+    int rowCount = index.model()->rowCount(indexP);
+    qDebug()<<rowCount;
+    int Iteor = 0;
+    //int currenIndexRow = index.row();
+   // qDebug()<<currenIndexRow;
+    while(Iteor<rowCount)
+    {
+        indexRegiste =  indexP.child(Iteor,0);
+        QString str = QStringLiteral("%1").arg(indexRegiste.data().toString());
+       // qDebug()<<str;
+        Child.push_back(str);
 
-    while(indexP.parent()!= QModelIndex())
+        Iteor++;
+    }
+    QChildList = Child;
+    qDebug()<<indexP.parent().data().toString();
+
+    while(indexP.parent().data().toString()!= "Root"&&indexP.parent()!= QModelIndex())
     {
         str += QStringLiteral("%1").arg(indexP.data().toString());
         str += "\\";
         indexP = indexP.parent();
     }
-    str += QStringLiteral("%1").arg(indexP.data().toString());
-    str += "\\";
-    qDebug()<<str;
+
+    if(indexP.parent()!= QModelIndex())
+    {
+        str += QStringLiteral("%1").arg(indexP.data().toString());
+        str += "\\";
+    }
     QStringList temp1 = str.split("\\");
     QStringList::const_iterator constIterator;
     for (constIterator = temp1.constEnd()-1 ; constIterator != temp1.constBegin()-1;
@@ -91,7 +122,11 @@ void AddLabDialog::on_LabeltreeView_clicked(const QModelIndex &index)
 
 void AddLabDialog::on_Add_clicked()
 {
-    if(ui->lineEdit->displayText() == QString())
+    if(ui->lineEdit->displayText() == QString()||QChildList.contains(ui->lineEdit->displayText()))
+    {
+        return;
+    }
+    else if(ui->lineEdit->displayText() == "Root")
     {
         return;
     }

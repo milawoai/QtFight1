@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QStringList>
 #include <QSet>
+#include <QModelIndex>
 
 namespace Ui {
 class AddLabDialog;
@@ -33,6 +34,8 @@ private:
     Ui::AddLabDialog *ui;
     QString strOut;
     QSet<QString> haveBeenAdd;
+    QModelIndex CurrentIndex;
+    QStringList QChildList;
 };
 
 #endif // ADDLABDIALOG_H

@@ -12,21 +12,60 @@
 #include <QSplashScreen>
 #include <QDebug>
 #include <QCoreApplication>
+#include <QFile>
 #include <QTime>
+#include <QPropertyAnimation>
 #include "MyFileDeal.h"
 #include "QSortTheStringList.h"
 #include "mymdisubwindow.h"
+#include "MyNewword.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    myAddLab(NULL)
 {
     ui->setupUi(this);
-    myAddLab = NULL;
+    this->hide();
+
+    DataDir = new QDir("C:/Users/Administrator/Desktop/data");
+
+
+//***************背景制造*****************
+    int backgroundCount;
+    QDir dir="F:/pro/Resource";
+    QStringList filter;
+    filter<<"*.jpg";
+    dir.setNameFilters(filter);
+    QList<QFileInfo> *fileInfo=new QList<QFileInfo>(dir.entryInfoList(filter));
+    QTime t;
+    t= QTime::currentTime();
+    qsrand(t.msec()+t.second()*1000);
+    int n = 0;
+    if((backgroundCount = fileInfo->count())>0)
+    {
+         n = qrand()%(backgroundCount);
+    }
+    QPixmap pix(dir.absoluteFilePath(fileInfo->at(n).fileName()));
+    delete fileInfo;
+
+//***************NewWord制造*****************
+    QDir dir_B="F:\\pro\\QtFight1\\images\\background";
+    dir_B.setNameFilters(filter);
+    fileInfo=new QList<QFileInfo>(dir_B.entryInfoList(filter));
+    if((backgroundCount = fileInfo->count())>0)
+    {
+         n = qrand()%(backgroundCount);
+    }
+    QPixmap pix_B(dir_B.absoluteFilePath(fileInfo->at(n).fileName()));
+    delete fileInfo;
+    fileInfo = NULL;
+    newLabel = new NewWord(pix_B);
+    newLabel->show();
+
 
     actionSeparator = new QAction(this); // 创建间隔器动作
     actionSeparator->setSeparator(true); // 在其中设置间隔器
-
     actionCreate = NULL;
     updateMenus();   // 更新菜单
     connect(ui->mdiArea,SIGNAL(subWindowActivated(QMdiSubWindow*)),this,
@@ -39,68 +78,180 @@ MainWindow::MainWindow(QWidget *parent) :
     updateWindowMenu();
     // 更新窗口菜单，并且设置当窗口菜单将要显示的时候更新窗口菜单
     connect(ui->menu_W,SIGNAL(aboutToShow()),this,SLOT(updateWindowMenu()));
-
+    ROOTMenu = ui->menu_L;
     readSettings(); // 初始窗口时读取窗口设置信息
     initWindow(); // 初始化窗口
-    ROOTMenu = ui->menu_L;
+    ui->mdiArea->resize(pix.size());
+    ui->mdiArea->setBackground(pix);
 
-    QList<QAction*> actionList = ROOTMenu->actions();
-    QAction * actiontemp = NULL;
-    foreach (actiontemp, actionList) {
+//*******************计时器************
+    QTime NowTime = QTime::currentTime();
+    int minute = NowTime.minute();
+    //int hour = NowTime.hour();
+    int second = NowTime.second();
 
-        QString strTemp = actiontemp->text();
-        if(strTemp == "Add")
+    QDate NowDate = QDate::currentDate();
+    QString toDayFile = NowDate.toString("yyyy-MM-dd");
+    qDebug()<<toDayFile;
+    fileInfo=new QList<QFileInfo>(DataDir->entryInfoList());
+    QFileInfo FileInfoTemp;
+    QString FilePath;
+    bool CurrentFileExist = false;
+    for (int i = 0; i < fileInfo->size(); ++i)
+    {
+        FileInfoTemp = fileInfo->at(i);
+        qDebug()<<FileInfoTemp.baseName();
+        if(FileInfoTemp.baseName()==toDayFile)
         {
-            continue;
-        }
-        else if(actiontemp->menu()!=NULL)
-        {
-            QString SendIn = "";
-            SendIn += strTemp;
-            SendIn += '\\';
-            ReadRecio(actiontemp->menu(),SendIn,0);
-        }
-        else
-        {
-            QSonAction *sonAction = new QSonAction(actiontemp);
-            QString SendIn = "";
-            SendIn += strTemp;
-            SendIn += '\\';
-            sonAction->setQStringList(SendIn.split('\\', QString::SkipEmptyParts));
-            SonActionList.push_back(sonAction);
-            connect(actiontemp,SIGNAL(triggered()),sonAction,SLOT(TimeToAction()));
-            connect(sonAction,SIGNAL(SonAction(QStringList)),this,SLOT(AddToMdiChild(QStringList)));
+            FilePath =FileInfoTemp.absoluteFilePath();
+            CurrentFileExist = true;
+            break;
         }
     }
-   // setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);//去掉边框，保留任务栏菜单
-    //setAttribute(Qt::WA_TranslucentBackground);//;透明
-    QDir dir=directoryOf("Resource");
-    QStringList filter;
-    filter<<"*.jpg";
-    dir.setNameFilters(filter);
-    QList<QFileInfo> *fileInfo=new QList<QFileInfo>(dir.entryInfoList(filter));
-    QTime t;
-    t= QTime::currentTime();
-    qsrand(t.msec()+t.second()*1000);
-    int n = qrand()%(fileInfo->count());
-    QPixmap pix(directoryOf("Resource").absoluteFilePath(fileInfo->at(n).fileName()));
-//    //pix.fill(qRgba(100, 100, 100,0));
-//    //QBrush brush = QBrush(pix.resize(ui->mdiArea->size()));
-//    //ui->mdiArea->setAutoFillBackground(false);
-//    qDebug()<<Mysize;
-//    qDebug()<<Mysize-ui->mdiArea->size();
-//    pix = pix.scaled(Mysize-ui->mdiArea->size());
-//    qDebug()<<pix.size();
-//    //ui->mdiArea->setAutoFillBackground(true);
+    if(CurrentFileExist&&!FilePath.isEmpty())
+    {
+        QMdiSubWindow *existing = findMdiChild(FilePath);
+        if (existing) { // 如果已经存在，则将对应的子窗口设置为活动窗口
+            ui->mdiArea->setActiveSubWindow(existing);
+            return;
+        }
+        MdiChild *child = createMdiChild(); // 如果没有打开，则新建子窗口
+        if (child->loadFile(FilePath)) {
+            child->show();
+        } else {
+            child->close();
+        }
+    }
+    else
+    {
+        QFile TodayFile(DataDir->absolutePath()+"\\"+toDayFile);
+        TodayFile.open(QIODevice::WriteOnly);
+        TodayFile.close();
+        MdiChild *child = createMdiChild(); // 如果没有打开，则新建子窗口
+        if (child->loadFile(DataDir->absolutePath()+"\\"+toDayFile)) {
+            child->show();
+        } else {
+            child->close();
+        }
 
-    ui->mdiArea->setBackground(pix);
+    }
+
+
+//    qDebug()<<minute;
+//    qDebug()<<hour;
+//    qDebug()<<second;
+    int Lastsecond = (60 - minute)>0?(60 - minute)*60+second:second;
+    id_GetZhengDian = startTimer(Lastsecond*1000);
+    //id_GetZhengDian = startTimer(60000);
+
+//*******************生成托盘*****************************
+    trayicon = new QSystemTrayIcon(this);
+     //创建QIcon对象，参数是图标资源，值为项目的资源文件中图标的地址
+     QIcon icon("F:/pro/1.ico");
+     trayiconMenu = new QMenu(this);
+     //为托盘菜单添加菜单项
+     trayiconQuit = trayiconMenu->addAction("quit");
+     //为托盘菜单添加分隔符
+     trayiconMenu->addSeparator();
+
+     //将创建的QIcon对象作为系统托盘图标
+     trayicon->setIcon(icon);
+     //显示托盘图标
+     trayicon->show();
+     //设置系统托盘提示
+     trayicon->setToolTip(QStringLiteral("托盘测试"));
+     //将创建菜单作为系统托盘菜单
+     trayicon->setContextMenu(trayiconMenu);
+     //在系统托盘显示气泡消息提示
+     trayicon->showMessage(tr("hahaya"), QStringLiteral("托盘测试"), QSystemTrayIcon::Information, 5000);
+     //为系统托盘绑定单击信号的槽 即图标激活时
+     connect(trayicon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(onSystemTrayIconClicked(QSystemTrayIcon::ActivationReason)));
+     connect(trayiconQuit, SIGNAL(triggered()), this, SLOT(close()));
+     connect(trayiconQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
+
+//**********************浮现设置
+     QPropertyAnimation *animation = new QPropertyAnimation(this, "windowOpacity");
+     animation->setDuration(1000);
+     animation->setStartValue(0);
+     animation->setEndValue(1);
+     animation->start();
+
+
 }
 MainWindow::~MainWindow()
 {
     delete ui;
-    if(actionCreate!=NULL)
+//    if(actionCreate!=NULL)
+//    {
+//        delete actionCreate;
+//    }
+    if(myAddLab!=NULL)
     {
-        delete actionCreate;
+        myAddLab->close();
+        delete myAddLab;
+        myAddLab=NULL;
+    }
+    if(newLabel!=NULL)
+    {
+        newLabel->hide();
+        delete newLabel;
+        newLabel=NULL;
+    }
+    if(trayicon!=NULL)
+    {
+        trayicon->hide();
+        delete trayicon;
+        trayicon=NULL;
+    }
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if(event->modifiers() == Qt::ControlModifier)
+    {
+        if(event->key() == Qt::Key_S)
+        {
+            if(activeMdiChild()&&activeMdiChild()->save())
+            {
+                ui->statusBar->showMessage(tr("Success saved"),2000);
+            }
+        }
+        else if(event->key() == Qt::Key_H)
+        {
+            if(this->isVisible())
+            {
+                this->hide();
+            }
+            if(!trayicon->isVisible())
+            {
+               trayicon->show();
+           }
+        }
+        else QMainWindow::keyPressEvent(event);
+    }
+}
+
+void MainWindow::timerEvent(QTimerEvent *event)
+{
+    if(event->timerId() == id_GetZhengDian)
+    {
+        QPropertyAnimation *animation = new QPropertyAnimation(this, "windowOpacity");
+        animation->setDuration(1000);
+        animation->setStartValue(0);
+        animation->setEndValue(1);
+        animation->start();
+        this->show();
+        id_Hour = startTimer(3600*1000);
+        killTimer(id_GetZhengDian);
+    }
+    else if(event->timerId() == id_Hour)
+    {
+        QPropertyAnimation *animation = new QPropertyAnimation(this, "windowOpacity");
+        animation->setDuration(1000);
+        animation->setStartValue(0);
+        animation->setEndValue(1);
+        animation->start();
+        this->show();
     }
 }
 
@@ -221,7 +372,7 @@ void MainWindow::AddToMdiChild(QStringList str)
             activeMdiChild()->append("");
             for(int i = 0;i<layers;i++)
             {
-                activeMdiChild()->insertPlainText("\ ");
+                activeMdiChild()->insertPlainText("    ");
             }
             activeMdiChild()->insertPlainText("<");
             activeMdiChild()->insertPlainText(Stem);
@@ -237,7 +388,7 @@ void MainWindow::AddToMdiChild(QStringList str)
             activeMdiChild()->append("");
             for(int i = 0;i<layers;i++)
             {
-                activeMdiChild()->insertPlainText("\ ");
+                activeMdiChild()->insertPlainText("    ");
             }
             activeMdiChild()->insertPlainText("<");
             activeMdiChild()->insertPlainText("\\");
@@ -245,6 +396,24 @@ void MainWindow::AddToMdiChild(QStringList str)
             activeMdiChild()->insertPlainText(">");
         }
     }
+}
+
+void MainWindow::onSystemTrayIconClicked(QSystemTrayIcon::ActivationReason reason)
+{
+    switch(reason)
+    {
+      //单击
+      case QSystemTrayIcon::Trigger:
+      //双击
+      case QSystemTrayIcon::DoubleClick:
+          //恢复窗口显示
+          this->setWindowState(Qt::WindowActive);
+          this->show();
+          trayicon->hide();
+          break;
+      default:
+          break;
+     }
 }
 
 void MainWindow::on_actionSave_triggered()
@@ -329,6 +498,7 @@ void MainWindow::on_actionClose_triggered()
 {
      ui->mdiArea->closeActiveSubWindow();
 }
+
 
 void MainWindow::updateWindowMenu()
 {
@@ -509,20 +679,50 @@ void MainWindow::updateLabelMenu(QStringList str)//更新Label列表
         emit LabelSignal(stringList);
 
         actiontemp = NULL;
-        myAddLab->update();
+        if(myAddLab)
+        {
+            myAddLab->update();
+        }
     }
 
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) // 关闭事件
 {
-    ui->mdiArea->closeAllSubWindows(); // 先执行多文档区域的关闭操作
-    if (ui->mdiArea->currentSubWindow()) {
-        event->ignore(); // 如果还有窗口没有关闭，则忽略该事件
-    } else {
-        writeSettings(); // 在关闭前写入窗口设置
-        event->accept();
-    }
+//    DialogForQSystemTrayIcon *dialogForQSystemTrayIcon = new DialogForQSystemTrayIcon;
+//    dialogForQSystemTrayIcon->show();
+//    connect(dialogForQSystemTrayIcon,SIGNAL(SendTrayResult(bool)),this,SLOT(setTheTrayResult(bool)));
+//    if(TrayResult)
+//    {
+//        if(trayicon->isVisible())
+//         {
+//              hide();
+//              event->ignore();
+//         }
+//        else
+//        {
+//            trayicon->show();
+//            hide();
+//            event->ignore();
+//        }
+//    }
+//    else
+//    {
+        ui->mdiArea->closeAllSubWindows(); // 先执行多文档区域的关闭操作
+        if(newLabel!=NULL)
+        {
+            newLabel->hide();
+        }
+        if (ui->mdiArea->currentSubWindow()) {
+            event->ignore(); // 如果还有窗口没有关闭，则忽略该事件
+        }
+        else {
+            writeSettings(); // 在关闭前写入窗口设置
+            event->accept();
+        }
+
+//    }
+
 }
 
 void MainWindow::ChangReadRecio(QList<QString> &StringList, QMenu *Menu,QString str)
@@ -579,6 +779,7 @@ QAction* MainWindow::WriterRecio(QStringList::const_iterator& iter, QStringList:
     {
        return Parent;
     }
+    return NULL;
 }
 
 QMenu* MainWindow::AddRecio(QString text, QMenu * Parent)
@@ -623,14 +824,43 @@ void MainWindow::DeleteAddLabDialog()
      qDebug()<<"Dot";
 }
 
-
-
 void MainWindow::writeSettings() // 写入窗口设置
 {
     QSettings settings("mola", "QtFight1");
     settings.setValue("pos", pos());   // 写入位置信息
     settings.setValue("size", size()); // 写入大小信息
     //settings.setValue("Label",);
+
+    QFile file("Label.dat");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QTextStream out(&file);
+
+    QList<QAction*> actionList = ui->menu_L->actions();
+    QList<QString> stringList;
+    QAction * actiontemp = NULL;
+
+    foreach (actiontemp, actionList) {
+        QString strTemp = actiontemp->text();
+        if(strTemp == "Add")
+        {
+            ;
+        }
+        else if(actiontemp->menu()!=NULL)
+        {
+            ChangReadRecio(stringList,actiontemp->menu(),strTemp);
+        }
+        else
+        {
+            stringList.push_back(strTemp);
+        }
+    }
+    QString ToWrite;
+    foreach (ToWrite,stringList)
+    {
+        out<<ToWrite<<endl;
+    }
 }
 
 void MainWindow::readSettings() // 读取窗口设置
@@ -679,17 +909,11 @@ void MainWindow::initWindow() // 初始化窗口
     QLabel *label = new QLabel(this);
     label->setFrameStyle(QFrame::Box | QFrame::Sunken);
     label->setText(
-          tr("<a href=\"http://www.yafeilinux.com\">yafeilinux.com</a>"));
+          tr("Zhou"));
     label->setTextFormat(Qt::RichText); // 标签文本为富文本
     label->setOpenExternalLinks(true);  // 可以打开外部链接
     ui->statusBar->addPermanentWidget(label);
     ui->actionNew->setStatusTip(tr("Create A new File"));
-
-    // 这里省略了其他动作的状态提示
-
-    /**************以下是1.4.3节省略的部分**************************/
-
-    ui->actionOpen->setStatusTip(tr("Open a existed file"));
     ui->actionSave->setStatusTip(tr("Save my file"));
     ui->actionSaveAs->setStatusTip(tr("Save as new name"));
     ui->actionExit->setStatusTip(tr("exit my Programe"));
@@ -705,7 +929,15 @@ void MainWindow::initWindow() // 初始化窗口
     ui->actionNext->setStatusTip(tr("Next"));
     ui->actionPrevious->setStatusTip(tr("previous"));
 
-    /**************以上是1.4.3节省略的部分**************************/
+    QFile file("Label.dat");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return;
+
+    QTextStream in(&file);
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        updateLabelMenu(line.split('\\'));
+    }
 }
 
 void MainWindow::on_actionAddLab_triggered()
@@ -740,4 +972,27 @@ void MainWindow::on_actionAddLab_triggered()
     actiontemp = NULL;
     myAddLab->show();
     connect(myAddLab,SIGNAL(EndIt()),this,SLOT(DeleteAddLabDialog()));
+}
+
+void MainWindow::on_actionWordCard_triggered()
+{
+    if(newLabel!=NULL)
+    {
+        newLabel->show();
+    }
+}
+
+void MainWindow::setTheTrayResult(bool result)
+{
+    TrayResult = result;
+}
+
+void MainWindow::on_action_triggered()
+{
+
+    if(!trayicon->isVisible())
+    {
+       trayicon->show();
+   }
+    this->hide();
 }

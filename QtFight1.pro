@@ -20,7 +20,9 @@ SOURCES += main.cpp\
     mysignalmapper.cpp \
     mymdisubwindow.cpp \
     qsonaction.cpp \
-    MyFileDeal.cpp
+    MyFileDeal.cpp \
+    MyNewword.cpp \
+    Dialogforqsystemtrayicon.cpp
 
 HEADERS  += mainwindow.h \
     mdichild.h \
@@ -29,13 +31,21 @@ HEADERS  += mainwindow.h \
     mysignalmapper.h \
     mymdisubwindow.h \
     qsonaction.h \
-    MyFileDeal.h
+    MyFileDeal.h \
+    MyNewword.h \
+    Dialogforqsystemtrayicon.h
 
 FORMS    += mainwindow.ui \
-    addlabdialog.ui
+    addlabdialog.ui \
+    NewWord.ui \
+    newword.ui \
+    dialogforqsystemtrayicon.ui
 
 RESOURCES += \
     myImage.qrc
 
 OTHER_FILES += \
-    readMe.txt
+    readMe.txt \
+    myapp.rc
+
+RC_FILE = myapp.rc

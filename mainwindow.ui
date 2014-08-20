@@ -40,6 +40,7 @@
     <addaction name="actionSaveAs"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
+    <addaction name="action"/>
    </widget>
    <widget class="QMenu" name="menu_E">
     <property name="title">
@@ -64,27 +65,14 @@
     <addaction name="separator"/>
     <addaction name="actionNext"/>
     <addaction name="actionPrevious"/>
+    <addaction name="separator"/>
+    <addaction name="actionWordCard"/>
    </widget>
    <widget class="QMenu" name="menu_L">
     <property name="title">
      <string>标签(&amp;L)</string>
     </property>
-    <widget class="QMenu" name="menuP">
-     <property name="title">
-      <string>P</string>
-     </property>
-     <widget class="QMenu" name="menu89">
-      <property name="title">
-       <string>89</string>
-      </property>
-      <addaction name="action756"/>
-     </widget>
-     <addaction name="menu89"/>
-     <addaction name="action66"/>
-    </widget>
     <addaction name="actionAddLab"/>
-    <addaction name="actionPython"/>
-    <addaction name="menuP"/>
    </widget>
    <addaction name="menu_F"/>
    <addaction name="menu_E"/>
@@ -160,6 +148,9 @@
    </property>
    <property name="text">
     <string>退出(&amp;X)</string>
+   </property>
+   <property name="whatsThis">
+    <string/>
    </property>
   </action>
   <action name="actionUndo">
@@ -277,6 +268,16 @@
   <action name="action756">
    <property name="text">
     <string>756</string>
+   </property>
+  </action>
+  <action name="actionWordCard">
+   <property name="text">
+    <string>WordCard</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="text">
+    <string>隐</string>
    </property>
   </action>
  </widget>
