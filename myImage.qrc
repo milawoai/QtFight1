@@ -14,5 +14,15 @@
         <file>images/saveAs.png</file>
         <file>images/undo.png</file>
         <file>images/1.ico</file>
+        <file>images/filesave.png</file>
+        <file>images/textbold.png</file>
+        <file>images/textcenter.png</file>
+        <file>images/textitalic.png</file>
+        <file>images/textjustify.png</file>
+        <file>images/textleft.png</file>
+        <file>images/textright.png</file>
+        <file>images/textunder.png</file>
+        <file>images/zoomin.png</file>
+        <file>images/zoomout.png</file>
     </qresource>
 </RCC>

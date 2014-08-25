@@ -18,6 +18,14 @@ class QMdiSubWindow;
 class QSignalMapper;
 class NewWord;
 class QDir;
+class QAction;
+class QComboBox;
+class QFontComboBox;
+class QTextEdit;
+class QTextCharFormat;
+class QMenu;
+class QPrinter;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -38,6 +46,8 @@ signals:
     void LabelSignal(QList<QString>);
 
 private slots:
+
+    void textFamily(const QString &f);
 
     void DeleteAddLabDialog();
 
@@ -97,7 +107,28 @@ private slots:
 
     void on_action_triggered();
 
+    void on_actionTextBold_triggered();
+
+    void on_actionTextItalic_triggered();
+
+    void on_actionTextUnderline_triggered();
+
+    void on_actionAlignLeft_triggered();
+
+    void on_actionAlignCenter_triggered();
+
+    void on_actionAlignRight_triggered();
+
+    void on_actionAlignJustify_triggered();
+
+    void textSize(const QString &p);
+
+    void textStyle(int styleIndex);
+
+    void on_actionSaveAs_triggered();
+
 private:
+
     Ui::MainWindow *ui;
     QAction *actionSeparator;    //分隔符
     MdiChild *activeMdiChild(); //活动窗口
@@ -125,6 +156,11 @@ private:
     void initWindow(); // 初始化窗口
 
     QAction* trayiconQuit;
+
+    void setupTextActions();
+
+
+
 };
 
 #endif // MAINWINDOW_H

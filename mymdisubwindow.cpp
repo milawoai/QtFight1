@@ -1,6 +1,6 @@
 #include "mymdisubwindow.h"
 
-MyMdiSubWindow::MyMdiSubWindow(QWidget *parent) :
-    QMdiSubWindow(parent)
+mymdisubwindow::mymdisubwindow(QObject *parent) :
+    QObject(parent)
 {
 }

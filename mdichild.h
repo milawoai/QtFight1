@@ -13,21 +13,29 @@ public:
     bool save();
     bool saveAs();
     bool saveFile(const QString &fileName);
+    void mergeFormatOnWordOrSelection(const QTextCharFormat &format);
     QString userFriendlyCurrentFile();
     QString currentFile(){return curFile;}
 protected:
     void closeEvent(QCloseEvent *event);
+    void keyPressEvent(QKeyEvent* event);
+    bool canInsertFromMimeData(const QMimeData * source) const;
+    void insertFromMimeData(const QMimeData* source);
 signals:
 
 public slots:
-
+    void paste();
 private slots:
     void documentWasModified();
+
 private:
     bool maybeSave();
+    void dropImage(const QUrl& url, const QImage& image);
+    void dropTextFile(const QUrl& url);
     void setCurrentFile(const QString &fileName);
     QString curFile;
     bool isUntitled;
+    QString thePath;
 };
 
 #endif // MDICHILD_H

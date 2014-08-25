@@ -1,4 +1,5 @@
 ﻿#include "mdichild.h"
+#include <QDebug>
 #include <QFile>
 #include <QTextStream>
 #include <QMessageBox>
@@ -7,12 +8,18 @@
 #include <QFileDialog>
 #include <QCloseEvent>
 #include <QPushButton>
+#include <QByteArray>
+#include <QTextCodec>
+#include <QTextDocumentWriter>
+#include <QClipboard>
+#include <QMimeData>
+#include <QImageReader>
 
 MdiChild::MdiChild(QWidget *parent) :
     QTextEdit(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);// 这样可以在子窗口关闭时销毁这个类的对象
-    isUntitled = true;
+    isUntitled = true; 
 }
 
 void MdiChild::newFile()// 新建文件操作
@@ -42,30 +49,57 @@ void MdiChild::documentWasModified()
     setWindowModified(document()->isModified());
 }
 
+void MdiChild::paste()
+{
+    const QClipboard *clipboard = QApplication::clipboard();
+    const QMimeData *mimeData = clipboard->mimeData();
+    if(this->canInsertFromMimeData(mimeData))
+    {
+        this->insertFromMimeData(mimeData);
+    }
+}
+
 bool MdiChild::loadFile(const QString &fileName)
 {
     // 新建QFile对象
-    QFile file(fileName);
-
-    // 只读方式打开文件，出错则提示，并返回false
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        QMessageBox::warning(this, tr("MutilEdit"),
-                             tr("Can't read it%1:\n%2.")
-                             .arg(fileName).arg(file.errorString()));
+    if (!QFile::exists(fileName))
         return false;
+    QFile file(fileName);
+    if (!file.open(QFile::ReadOnly))
+        return false;
+
+
+    QByteArray data = file.readAll();
+    QTextCodec *codec = Qt::codecForHtml(data);
+    QString str = codec->toUnicode(data);
+    if (Qt::mightBeRichText(str)) {
+        this->setHtml(str);
+    } else {
+        str = QString::fromLocal8Bit(data);
+        this->setPlainText(str);
     }
 
-    // 新建文本流对象
-    QTextStream in(&file);
+//    QFile file(fileName);
 
-    // 设置鼠标状态为等待状态
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+//    // 只读方式打开文件，出错则提示，并返回false
+//    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+//        QMessageBox::warning(this, tr("MutilEdit"),
+//                             tr("Can't read it%1:\n%2.")
+//                             .arg(fileName).arg(file.errorString()));
+//        return false;
+//    }
 
-    // 读取文件的全部文本内容，并添加到编辑器中
-    setPlainText(in.readAll());
+//    // 新建文本流对象
+//    QTextStream in(&file);
 
-    // 恢复鼠标状态
-    QApplication::restoreOverrideCursor();
+//    // 设置鼠标状态为等待状态
+//    QApplication::setOverrideCursor(Qt::WaitCursor);
+
+//    // 读取文件的全部文本内容，并添加到编辑器中
+//    setPlainText(in.readAll());
+
+//    // 恢复鼠标状态
+//    QApplication::restoreOverrideCursor();
 
     // 设置当前文件
     setCurrentFile(fileName);
@@ -130,13 +164,36 @@ bool MdiChild::loadFile(const QString &fileName)
          return false;
      }
 
-     QTextStream out(&file);
-     QApplication::setOverrideCursor(Qt::WaitCursor);
-     out << toPlainText(); // 以纯文本文件写入
-     QApplication::restoreOverrideCursor();
+//     QTextStream out(&file);
+//     QApplication::setOverrideCursor(Qt::WaitCursor);
+//     out << toPlainText(); // 以纯文本文件写入
+//     QApplication::restoreOverrideCursor();
 
+     QTextDocumentWriter writer(fileName);
+     bool success = writer.write(this->document());
+     if (success)
+         this->document()->setModified(false);
      setCurrentFile(fileName);
+
+//     QTextDocumentWriter writer(fileName);
+//     bool success = writer.write(this->document());
+//     if (success)
+//     {
+//         this->document()->setModified(false);
+//     }
+//     return success;
+
+
      return true;
+ }
+
+ void MdiChild::mergeFormatOnWordOrSelection(const QTextCharFormat &format)
+ {
+     QTextCursor cursor = this->textCursor();
+     if (!cursor.hasSelection())
+         cursor.select(QTextCursor::WordUnderCursor);
+     cursor.mergeCharFormat(format);
+     this->mergeCurrentCharFormat(format);
  }
 
  void MdiChild::closeEvent(QCloseEvent *event)
@@ -146,6 +203,53 @@ bool MdiChild::loadFile(const QString &fileName)
      } else {   // 否则忽略该事件
          event->ignore();
      }
+ }
+
+ void MdiChild::keyPressEvent(QKeyEvent *event)
+ {
+     if(event->modifiers() == Qt::ControlModifier)
+     {
+         if(event->key() == Qt::Key_V)
+         {
+             this->paste();
+         }
+         else QTextEdit::keyPressEvent(event);
+     }
+     else
+     {
+         QTextEdit::keyPressEvent(event);
+     }
+ }
+
+ bool MdiChild::canInsertFromMimeData(const QMimeData *source) const
+ {
+     return source->hasImage() || source->hasUrls() ||
+             QTextEdit::canInsertFromMimeData(source);
+ }
+
+ void MdiChild::insertFromMimeData(const QMimeData *source)
+ {
+     if (source->hasImage())
+     {
+         static int i = 1;
+         QUrl url(QString("dropped_image_%1").arg(i++));
+         dropImage(url, qvariant_cast<QImage>(source->imageData()));
+     }
+             else if (source->hasUrls())
+             {
+                 foreach (QUrl url, source->urls())
+                 {
+                     QFileInfo info(url.toLocalFile());
+                     if (QImageReader::supportedImageFormats().contains(info.suffix().toLower().toLatin1()))
+                         dropImage(url, QImage(info.filePath()));
+                     else
+                         dropTextFile(url);
+                 }
+             }
+             else
+             {
+                 QTextEdit::insertFromMimeData(source);
+             }
  }
 
  bool MdiChild::maybeSave()
@@ -170,5 +274,24 @@ bool MdiChild::loadFile(const QString &fileName)
      }
      return true; // 如果文档没有更改过，则直接返回true
  }
+
+ void MdiChild::dropImage(const QUrl &url, const QImage &image)
+ {
+     if (!image.isNull())
+     {
+         document()->addResource(QTextDocument::ImageResource, url, image);
+         textCursor().insertImage(url.toString());
+     }
+ }
+
+ void MdiChild::dropTextFile(const QUrl &url)
+ {
+     QFile file(url.toLocalFile());
+      if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+      {
+          textCursor().insertText(file.readAll());
+      }
+ }
+
 
 

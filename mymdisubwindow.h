@@ -1,13 +1,13 @@
 #ifndef MYMDISUBWINDOW_H
 #define MYMDISUBWINDOW_H
 
-#include <QMdiSubWindow>
+#include <QObject>
 
-class MyMdiSubWindow : public QMdiSubWindow
+class mymdisubwindow : public QObject
 {
     Q_OBJECT
 public:
-    explicit MyMdiSubWindow(QWidget *parent = 0);
+    explicit mymdisubwindow(QObject *parent = 0);
 
 signals:
 

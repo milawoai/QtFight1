@@ -15,18 +15,45 @@
 #include <QFile>
 #include <QTime>
 #include <QPropertyAnimation>
+#include <QAction>
+#include <QApplication>
+#include <QClipboard>
+#include <QColorDialog>
+#include <QComboBox>
+#include <QFontComboBox>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QFontDatabase>
+#include <QMenu>
+#include <QMenuBar>
+#include <QTextCodec>
+#include <QTextEdit>
+#include <QToolBar>
+#include <QTextCursor>
+#include <QTextDocumentWriter>
+#include <QTextList>
+#include <QtDebug>
+#include <QCloseEvent>
+#include <QMessageBox>
+#include <QMimeData>
+//#ifndef QT_NO_PRINTER
+//#include <QPrintDialog>
+//#include <QPrinter>
+//#include <QPrintPreviewDialog>
 #include "MyFileDeal.h"
 #include "QSortTheStringList.h"
-#include "mymdisubwindow.h"
 #include "MyNewword.h"
 
+
+const QString rsrcPath = ":/myImage/images";
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     myAddLab(NULL)
 {
     ui->setupUi(this);
-    this->hide();
+    setupTextActions();
 
     DataDir = new QDir("C:/Users/Administrator/Desktop/data");
 
@@ -92,7 +119,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QDate NowDate = QDate::currentDate();
     QString toDayFile = NowDate.toString("yyyy-MM-dd");
-    qDebug()<<toDayFile;
+    //qDebug()<<toDayFile;
     fileInfo=new QList<QFileInfo>(DataDir->entryInfoList());
     QFileInfo FileInfoTemp;
     QString FilePath;
@@ -100,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < fileInfo->size(); ++i)
     {
         FileInfoTemp = fileInfo->at(i);
-        qDebug()<<FileInfoTemp.baseName();
+        //qDebug()<<FileInfoTemp.baseName();
         if(FileInfoTemp.baseName()==toDayFile)
         {
             FilePath =FileInfoTemp.absoluteFilePath();
@@ -124,11 +151,11 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     else
     {
-        QFile TodayFile(DataDir->absolutePath()+"\\"+toDayFile);
+        QFile TodayFile(DataDir->absolutePath()+"\\"+toDayFile+".html");
         TodayFile.open(QIODevice::WriteOnly);
         TodayFile.close();
         MdiChild *child = createMdiChild(); // 如果没有打开，则新建子窗口
-        if (child->loadFile(DataDir->absolutePath()+"\\"+toDayFile)) {
+        if (child->loadFile(DataDir->absolutePath()+"\\"+toDayFile+".html")) {
             child->show();
         } else {
             child->close();
@@ -995,4 +1022,194 @@ void MainWindow::on_action_triggered()
        trayicon->show();
    }
     this->hide();
+}
+
+void MainWindow::setupTextActions()
+{
+    QPixmap pix(16, 16);
+    pix.fill(Qt::black);
+    ui->actionTextColor->setIcon(pix);
+
+    QComboBox *comboStyle = new QComboBox(ui->toolBar);
+    ui->toolBar->addWidget(comboStyle);
+    comboStyle->addItem("Standard");
+    comboStyle->addItem("Bullet List (Disc)");
+    comboStyle->addItem("Bullet List (Circle)");
+    comboStyle->addItem("Bullet List (Square)");
+    comboStyle->addItem("Ordered List (Decimal)");
+    comboStyle->addItem("Ordered List (Alpha lower)");
+    comboStyle->addItem("Ordered List (Alpha upper)");
+    comboStyle->addItem("Ordered List (Roman lower)");
+    comboStyle->addItem("Ordered List (Roman upper)");
+    connect(comboStyle, SIGNAL(activated(int)), this, SLOT(textStyle(int)));
+
+    QFontComboBox *comboFont = new QFontComboBox(ui->toolBar);
+    ui->toolBar->addWidget(comboFont);
+    connect(comboFont, SIGNAL(activated(QString)), this, SLOT(textFamily(QString)));
+
+    QComboBox *comboSize = new QComboBox(ui->toolBar);
+    comboSize->setObjectName("comboSize");
+    ui->toolBar->addWidget(comboSize);
+    comboSize->setEditable(true);
+
+    QFontDatabase db;
+    foreach(int size, db.standardSizes())
+        comboSize->addItem(QString::number(size));
+
+    connect(comboSize, SIGNAL(activated(QString)), this, SLOT(textSize(QString)));
+    comboSize->setCurrentIndex(comboSize->findText(QString::number(QApplication::font().pointSize())));
+}
+
+
+
+void MainWindow::on_actionTextBold_triggered()
+{
+    if(activeMdiChild())
+    {
+        QTextCharFormat fmt;
+        fmt.setFontWeight(ui->actionTextBold->isChecked() ? QFont::Bold : QFont::Normal);
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+    }
+}
+
+void MainWindow::on_actionTextItalic_triggered()
+{
+    if(activeMdiChild())
+    {
+        QTextCharFormat fmt;
+        fmt.setFontItalic(ui->actionTextItalic->isChecked());
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+    }
+}
+
+void MainWindow::on_actionTextUnderline_triggered()
+{
+    if(activeMdiChild())
+    {
+        QTextCharFormat fmt;
+        fmt.setFontUnderline(ui->actionTextItalic->isChecked());
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+    }
+}
+
+void MainWindow::on_actionAlignLeft_triggered()
+{
+    if(activeMdiChild())
+    {
+        activeMdiChild()->setAlignment(Qt::AlignLeft | Qt::AlignAbsolute);
+    }
+}
+
+void MainWindow::on_actionAlignCenter_triggered()
+{
+    if(activeMdiChild())
+    {
+        activeMdiChild()->setAlignment(Qt::AlignHCenter);
+    }
+}
+
+void MainWindow::on_actionAlignRight_triggered()
+{
+    if(activeMdiChild())
+    {
+        activeMdiChild()->setAlignment(Qt::AlignRight | Qt::AlignAbsolute);
+    }
+}
+
+void MainWindow::on_actionAlignJustify_triggered()
+{
+    if(activeMdiChild())
+    {
+        activeMdiChild()->setAlignment(Qt::AlignJustify);
+    }
+}
+void MainWindow::textFamily(const QString &f)
+{
+    if(activeMdiChild())
+    {
+        QTextCharFormat fmt;
+        fmt.setFontFamily(f);
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+    }
+}
+
+void MainWindow::textStyle(int styleIndex)
+{
+    if(activeMdiChild())
+    {
+        QTextCursor cursor = activeMdiChild()->textCursor();
+        if (styleIndex != 0) {
+            QTextListFormat::Style style = QTextListFormat::ListDisc;
+            switch (styleIndex) {
+                default:
+                case 1:
+                    style = QTextListFormat::ListDisc;
+                    break;
+                case 2:
+                    style = QTextListFormat::ListCircle;
+                    break;
+                case 3:
+                    style = QTextListFormat::ListSquare;
+                    break;
+                case 4:
+                    style = QTextListFormat::ListDecimal;
+                    break;
+                case 5:
+                    style = QTextListFormat::ListLowerAlpha;
+                    break;
+                case 6:
+                    style = QTextListFormat::ListUpperAlpha;
+                    break;
+                case 7:
+                    style = QTextListFormat::ListLowerRoman;
+                    break;
+                case 8:
+                    style = QTextListFormat::ListUpperRoman;
+                    break;
+            }
+
+            cursor.beginEditBlock();
+
+            QTextBlockFormat blockFmt = cursor.blockFormat();
+
+            QTextListFormat listFmt;
+
+            if (cursor.currentList()) {
+                listFmt = cursor.currentList()->format();
+            } else {
+                listFmt.setIndent(blockFmt.indent() + 1);
+                blockFmt.setIndent(0);
+                cursor.setBlockFormat(blockFmt);
+            }
+
+            listFmt.setStyle(style);
+
+            cursor.createList(listFmt);
+
+            cursor.endEditBlock();
+        } else {
+            // ####
+            QTextBlockFormat bfmt;
+            bfmt.setObjectIndex(-1);
+            cursor.mergeBlockFormat(bfmt);
+        }
+    }
+}
+
+void MainWindow::textSize(const QString &p)
+{
+    if(activeMdiChild())
+    {
+        qreal pointSize = p.toFloat();
+        if (p.toFloat() > 0) {
+            QTextCharFormat fmt;
+            fmt.setFontPointSize(pointSize);
+            activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+        }
+    }
+}
+
+void MainWindow::on_actionSaveAs_triggered()
+{
+
 }

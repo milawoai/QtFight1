@@ -18,22 +18,22 @@ SOURCES += main.cpp\
     addlabdialog.cpp \
     QSortTheString.cpp \
     mysignalmapper.cpp \
-    mymdisubwindow.cpp \
     qsonaction.cpp \
     MyFileDeal.cpp \
     MyNewword.cpp \
-    Dialogforqsystemtrayicon.cpp
+    Dialogforqsystemtrayicon.cpp \
+    mymdisubwindow.cpp
 
 HEADERS  += mainwindow.h \
     mdichild.h \
     addlabdialog.h \
     QSortTheStringList.h \
     mysignalmapper.h \
-    mymdisubwindow.h \
     qsonaction.h \
     MyFileDeal.h \
     MyNewword.h \
-    Dialogforqsystemtrayicon.h
+    Dialogforqsystemtrayicon.h \
+    mymdisubwindow.h
 
 FORMS    += mainwindow.ui \
     addlabdialog.ui \
