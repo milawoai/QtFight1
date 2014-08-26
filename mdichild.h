@@ -30,7 +30,7 @@ private slots:
 
 private:
     bool maybeSave();
-    void dropImage(const QUrl& url, const QImage& image);
+    void dropImage(const QUrl &url, const QImage &image,const QString &SavePath);
     void dropTextFile(const QUrl& url);
     void setCurrentFile(const QString &fileName);
     QString curFile;

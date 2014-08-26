@@ -120,47 +120,41 @@ MainWindow::MainWindow(QWidget *parent) :
     QDate NowDate = QDate::currentDate();
     QString toDayFile = NowDate.toString("yyyy-MM-dd");
     //qDebug()<<toDayFile;
-    fileInfo=new QList<QFileInfo>(DataDir->entryInfoList());
-    QFileInfo FileInfoTemp;
-    QString FilePath;
-    bool CurrentFileExist = false;
-    for (int i = 0; i < fileInfo->size(); ++i)
+    QStringList filters;
+    filters<<toDayFile;
+    fileInfo=new QList<QFileInfo>(DataDir->entryInfoList(filters,QDir::Dirs));
+    if(fileInfo->empty())
     {
-        FileInfoTemp = fileInfo->at(i);
-        //qDebug()<<FileInfoTemp.baseName();
-        if(FileInfoTemp.baseName()==toDayFile)
-        {
-            FilePath =FileInfoTemp.absoluteFilePath();
-            CurrentFileExist = true;
-            break;
-        }
+        DataDir->mkdir(toDayFile);
     }
-    if(CurrentFileExist&&!FilePath.isEmpty())
+    QString newPath = DataDir->absolutePath()+"\\"+toDayFile;
+    qDebug()<<newPath;
+    delete DataDir;
+    DataDir = new QDir(newPath);
+    fileInfo=new QList<QFileInfo>(DataDir->entryInfoList(filters,QDir::Files));
+    QString FilePath;
+    if(fileInfo->empty())
+    {
+        FilePath = DataDir->absolutePath()+"\\"+toDayFile+".html";
+        QFile TodayFile(DataDir->absolutePath()+"\\"+toDayFile+".html");
+        TodayFile.open(QIODevice::WriteOnly);
+        TodayFile.close();
+
+    }
+    else
     {
         QMdiSubWindow *existing = findMdiChild(FilePath);
         if (existing) { // 如果已经存在，则将对应的子窗口设置为活动窗口
             ui->mdiArea->setActiveSubWindow(existing);
             return;
         }
-        MdiChild *child = createMdiChild(); // 如果没有打开，则新建子窗口
-        if (child->loadFile(FilePath)) {
-            child->show();
-        } else {
-            child->close();
-        }
     }
-    else
-    {
-        QFile TodayFile(DataDir->absolutePath()+"\\"+toDayFile+".html");
-        TodayFile.open(QIODevice::WriteOnly);
-        TodayFile.close();
-        MdiChild *child = createMdiChild(); // 如果没有打开，则新建子窗口
-        if (child->loadFile(DataDir->absolutePath()+"\\"+toDayFile+".html")) {
-            child->show();
-        } else {
-            child->close();
-        }
-
+    FilePath = DataDir->absolutePath()+"\\"+toDayFile+".html";
+    MdiChild *child = createMdiChild(); // 如果没有打开，则新建子窗口
+    if (child->loadFile(FilePath)) {
+        child->show();
+    } else {
+        child->close();
     }
 
 
@@ -393,10 +387,17 @@ void MainWindow::AddToMdiChild(QStringList str)
     if(activeMdiChild())
     {
         QString Stem;
+        QTextCharFormat fmt;
+        qreal pointSize = 32;
         int layers = 0;
         foreach(Stem,str)
         {
+
+
+            fmt.setFontPointSize(pointSize);
+            activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
             activeMdiChild()->append("");
+
             for(int i = 0;i<layers;i++)
             {
                 activeMdiChild()->insertPlainText("    ");
@@ -405,13 +406,34 @@ void MainWindow::AddToMdiChild(QStringList str)
             activeMdiChild()->insertPlainText(Stem);
             activeMdiChild()->insertPlainText(">");
 
+            pointSize -=8;
+            if(pointSize<=16)
+            {
+                pointSize = 16;
+            }
             layers++;
         }
+        activeMdiChild()->append("");
+        for(int i = 0;i<layers;i++)
+        {
+            activeMdiChild()->insertPlainText("    ");
+        }
+        QTextCursor Cursor = activeMdiChild()->textCursor();
+        int p = Cursor.position();
+        qDebug()<<p;
         QList<QString>::iterator strIter = str.end();
         while(strIter!=str.begin())
         {
+            pointSize +=8;
+            if(pointSize>=32)
+            {
+                pointSize = 32;
+            }
             strIter--;
             layers--;
+
+            fmt.setFontPointSize(pointSize);
+            activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
             activeMdiChild()->append("");
             for(int i = 0;i<layers;i++)
             {
@@ -422,6 +444,15 @@ void MainWindow::AddToMdiChild(QStringList str)
             activeMdiChild()->insertPlainText(*strIter);
             activeMdiChild()->insertPlainText(">");
         }
+
+        fmt.setFontPointSize(10);
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+        Cursor = activeMdiChild()->textCursor();
+        qDebug()<<p;
+        qDebug()<<Cursor.position();
+        Cursor.setPosition(p,QTextCursor::MoveAnchor);
+        activeMdiChild()->setTextCursor(Cursor);
+
     }
 }
 

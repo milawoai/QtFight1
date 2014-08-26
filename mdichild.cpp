@@ -68,6 +68,16 @@ bool MdiChild::loadFile(const QString &fileName)
     if (!file.open(QFile::ReadOnly))
         return false;
 
+    QDir *dir = new QDir(fileName);
+
+    thePath = dir->absolutePath();/*dir->dirName();*/
+
+    QString strTemp,strT;
+    strTemp = dir->absolutePath();
+    strT = dir->dirName();
+
+    int len = strTemp.indexOf(strT);
+    thePath = strTemp.left(len);
 
     QByteArray data = file.readAll();
     QTextCodec *codec = Qt::codecForHtml(data);
@@ -232,24 +242,25 @@ bool MdiChild::loadFile(const QString &fileName)
      if (source->hasImage())
      {
          static int i = 1;
-         QUrl url(QString("dropped_image_%1").arg(i++));
-         dropImage(url, qvariant_cast<QImage>(source->imageData()));
+         QString SavePath = thePath+QString("%1.bmp").arg(i++);
+         QUrl url(SavePath);
+         dropImage(url, qvariant_cast<QImage>(source->imageData()),SavePath);
      }
-             else if (source->hasUrls())
-             {
-                 foreach (QUrl url, source->urls())
-                 {
-                     QFileInfo info(url.toLocalFile());
-                     if (QImageReader::supportedImageFormats().contains(info.suffix().toLower().toLatin1()))
-                         dropImage(url, QImage(info.filePath()));
-                     else
-                         dropTextFile(url);
-                 }
-             }
+     else if (source->hasUrls())
+     {
+         foreach (QUrl url, source->urls())
+         {
+             QFileInfo info(url.toLocalFile());
+             if (QImageReader::supportedImageFormats().contains(info.suffix().toLower().toLatin1()))
+                 dropImage(url, QImage(info.filePath()),url.path());
              else
-             {
-                 QTextEdit::insertFromMimeData(source);
-             }
+                 dropTextFile(url);
+         }
+     }
+     else
+     {
+         QTextEdit::insertFromMimeData(source);
+     }
  }
 
  bool MdiChild::maybeSave()
@@ -275,10 +286,11 @@ bool MdiChild::loadFile(const QString &fileName)
      return true; // 如果文档没有更改过，则直接返回true
  }
 
- void MdiChild::dropImage(const QUrl &url, const QImage &image)
+ void MdiChild::dropImage(const QUrl &url, const QImage &image,const QString &SavePath)
  {
      if (!image.isNull())
      {
+         image.save(SavePath);
          document()->addResource(QTextDocument::ImageResource, url, image);
          textCursor().insertImage(url.toString());
      }
