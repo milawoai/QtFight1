@@ -14,6 +14,7 @@ public:
     bool saveAs();
     bool saveFile(const QString &fileName);
     void mergeFormatOnWordOrSelection(const QTextCharFormat &format);
+    void mergeFormatOnWordOrSelection2(const QTextCharFormat &format);
     QString userFriendlyCurrentFile();
     QString currentFile(){return curFile;}
 protected:

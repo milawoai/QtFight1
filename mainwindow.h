@@ -127,6 +127,12 @@ private slots:
 
     void on_actionSaveAs_triggered();
 
+    void on_actionTextColor_triggered();
+
+    void on_actionSetColor_triggered();
+
+    void on_actionDefColor_triggered();
+
 private:
 
     Ui::MainWindow *ui;
@@ -148,6 +154,7 @@ private:
     QSystemTrayIcon *trayicon;
     QMenu *trayiconMenu;
     QDir *DataDir;
+    QColor posColor;
 
     bool TrayResult;
 
@@ -158,6 +165,7 @@ private:
     QAction* trayiconQuit;
 
     void setupTextActions();
+    void colorChanged(const QColor &c);
 
 
 

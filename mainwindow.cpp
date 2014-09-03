@@ -2,6 +2,9 @@
 #include "ui_mainwindow.h"
 #include "mdichild.h"
 #include "addlabdialog.h"
+#include "MyFileDeal.h"
+#include "QSortTheStringList.h"
+#include "MyNewword.h"
 #include <QMdiSubWindow>
 #include <QFileInfo>
 #include <QFileDialog>
@@ -12,7 +15,6 @@
 #include <QSplashScreen>
 #include <QDebug>
 #include <QCoreApplication>
-#include <QFile>
 #include <QTime>
 #include <QPropertyAnimation>
 #include <QAction>
@@ -22,8 +24,6 @@
 #include <QComboBox>
 #include <QFontComboBox>
 #include <QFile>
-#include <QFileDialog>
-#include <QFileInfo>
 #include <QFontDatabase>
 #include <QMenu>
 #include <QMenuBar>
@@ -33,17 +33,9 @@
 #include <QTextCursor>
 #include <QTextDocumentWriter>
 #include <QTextList>
-#include <QtDebug>
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QMimeData>
-//#ifndef QT_NO_PRINTER
-//#include <QPrintDialog>
-//#include <QPrinter>
-//#include <QPrintPreviewDialog>
-#include "MyFileDeal.h"
-#include "QSortTheStringList.h"
-#include "MyNewword.h"
 
 
 const QString rsrcPath = ":/myImage/images";
@@ -121,22 +113,22 @@ MainWindow::MainWindow(QWidget *parent) :
     QString toDayFile = NowDate.toString("yyyy-MM-dd");
     //qDebug()<<toDayFile;
     QStringList filters;
-    filters<<toDayFile;
+    filters<<toDayFile+".html";
     fileInfo=new QList<QFileInfo>(DataDir->entryInfoList(filters,QDir::Dirs));
     if(fileInfo->empty())
     {
         DataDir->mkdir(toDayFile);
     }
-    QString newPath = DataDir->absolutePath()+"\\"+toDayFile;
-    qDebug()<<newPath;
+    QString newPath = DataDir->absolutePath()+"/"+toDayFile;
     delete DataDir;
     DataDir = new QDir(newPath);
+    qDebug()<<filters;
     fileInfo=new QList<QFileInfo>(DataDir->entryInfoList(filters,QDir::Files));
     QString FilePath;
     if(fileInfo->empty())
     {
-        FilePath = DataDir->absolutePath()+"\\"+toDayFile+".html";
-        QFile TodayFile(DataDir->absolutePath()+"\\"+toDayFile+".html");
+        FilePath = DataDir->absolutePath()+"/"+toDayFile+".html";
+        QFile TodayFile(DataDir->absolutePath()+"/"+toDayFile+".html");
         TodayFile.open(QIODevice::WriteOnly);
         TodayFile.close();
 
@@ -151,8 +143,12 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     FilePath = DataDir->absolutePath()+"\\"+toDayFile+".html";
     MdiChild *child = createMdiChild(); // 如果没有打开，则新建子窗口
+
     if (child->loadFile(FilePath)) {
         child->show();
+        QTextCursor Cursor = child->textCursor();
+        Cursor.movePosition(QTextCursor::End);
+        child->setTextCursor(Cursor);
     } else {
         child->close();
     }
@@ -248,8 +244,18 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
                trayicon->show();
            }
         }
+        else if(event->key() == Qt::Key_Q)
+        {
+            if(activeMdiChild()&&posColor.isValid())
+            {
+                QTextCharFormat fmt;
+                fmt.setForeground(posColor);
+                activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+            }
+        }
         else QMainWindow::keyPressEvent(event);
     }
+    else QMainWindow::keyPressEvent(event);
 }
 
 void MainWindow::timerEvent(QTimerEvent *event)
@@ -392,11 +398,10 @@ void MainWindow::AddToMdiChild(QStringList str)
         int layers = 0;
         foreach(Stem,str)
         {
-
-
+            activeMdiChild()->append("");
             fmt.setFontPointSize(pointSize);
             activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
-            activeMdiChild()->append("");
+
 
             for(int i = 0;i<layers;i++)
             {
@@ -414,10 +419,13 @@ void MainWindow::AddToMdiChild(QStringList str)
             layers++;
         }
         activeMdiChild()->append("");
+        fmt.setFontPointSize(16);
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
         for(int i = 0;i<layers;i++)
         {
             activeMdiChild()->insertPlainText("    ");
         }
+
         QTextCursor Cursor = activeMdiChild()->textCursor();
         int p = Cursor.position();
         qDebug()<<p;
@@ -445,13 +453,11 @@ void MainWindow::AddToMdiChild(QStringList str)
             activeMdiChild()->insertPlainText(">");
         }
 
-        fmt.setFontPointSize(10);
-        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
         Cursor = activeMdiChild()->textCursor();
-        qDebug()<<p;
-        qDebug()<<Cursor.position();
         Cursor.setPosition(p,QTextCursor::MoveAnchor);
         activeMdiChild()->setTextCursor(Cursor);
+        fmt.setFontPointSize(16);
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
 
     }
 }
@@ -996,6 +1002,11 @@ void MainWindow::initWindow() // 初始化窗口
         QString line = in.readLine();
         updateLabelMenu(line.split('\\'));
     }
+    QPixmap pix(16, 16);
+    pix.fill(Qt::black);
+    ui->actionTextColor->setIcon(pix);
+    ui->actionSetColor->setIcon(pix);
+    ui->actionDefColor->setIcon(pix);
 }
 
 void MainWindow::on_actionAddLab_triggered()
@@ -1089,6 +1100,14 @@ void MainWindow::setupTextActions()
 
     connect(comboSize, SIGNAL(activated(QString)), this, SLOT(textSize(QString)));
     comboSize->setCurrentIndex(comboSize->findText(QString::number(QApplication::font().pointSize())));
+}
+
+void MainWindow::colorChanged(const QColor &c)
+{
+    QPixmap pix(16, 16);
+    pix.fill(c);
+    ui->actionTextColor->setIcon(pix);
+    ui->actionSetColor->setIcon(pix);
 }
 
 
@@ -1243,4 +1262,39 @@ void MainWindow::textSize(const QString &p)
 void MainWindow::on_actionSaveAs_triggered()
 {
 
+}
+
+void MainWindow::on_actionTextColor_triggered()
+{
+    if(activeMdiChild())
+    {
+        QColor col = QColorDialog::getColor(activeMdiChild()->textColor(), this);
+        if (!col.isValid())
+            return;
+        posColor = col;
+        QTextCharFormat fmt;
+        fmt.setForeground(col);
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+        colorChanged(col);
+    }
+}
+
+void MainWindow::on_actionSetColor_triggered()
+{
+    if(activeMdiChild()&&posColor.isValid())
+    {
+        QTextCharFormat fmt;
+        fmt.setForeground(posColor);
+        activeMdiChild()->mergeFormatOnWordOrSelection(fmt);
+    }
+}
+
+void MainWindow::on_actionDefColor_triggered()
+{
+    if(activeMdiChild()&&posColor.isValid())
+    {
+        QTextCharFormat fmt;
+        fmt.setForeground(QColor(Qt::black));
+        activeMdiChild()->mergeFormatOnWordOrSelection2(fmt);
+    }
 }

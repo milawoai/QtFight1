@@ -14,6 +14,7 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QImageReader>
+#include <QDateTime>
 
 MdiChild::MdiChild(QWidget *parent) :
     QTextEdit(parent)
@@ -201,7 +202,20 @@ bool MdiChild::loadFile(const QString &fileName)
  {
      QTextCursor cursor = this->textCursor();
      if (!cursor.hasSelection())
+     {
          cursor.select(QTextCursor::WordUnderCursor);
+     }
+     cursor.mergeCharFormat(format);
+     this->mergeCurrentCharFormat(format);
+ }
+
+ void MdiChild::mergeFormatOnWordOrSelection2(const QTextCharFormat &format)
+ {
+     QTextCursor cursor = this->textCursor();
+//     if (!cursor.hasSelection())
+//     {
+//         cursor.select(QTextCursor::WordUnderCursor);
+//     }
      cursor.mergeCharFormat(format);
      this->mergeCurrentCharFormat(format);
  }
@@ -225,6 +239,10 @@ bool MdiChild::loadFile(const QString &fileName)
          }
          else QTextEdit::keyPressEvent(event);
      }
+     else if(event->key() == Qt::Key_Return)
+     {
+         QTextEdit::keyPressEvent(event);
+     }
      else
      {
          QTextEdit::keyPressEvent(event);
@@ -242,7 +260,9 @@ bool MdiChild::loadFile(const QString &fileName)
      if (source->hasImage())
      {
          static int i = 1;
-         QString SavePath = thePath+QString("%1.bmp").arg(i++);
+         QDateTime NowDate = QDateTime::currentDateTime();
+         QString toDayFile = NowDate.toString("yyyy-MM-dd-hh-mm-ss");
+         QString SavePath = thePath+toDayFile+QString("%1.bmp").arg(i++);
          QUrl url(SavePath);
          dropImage(url, qvariant_cast<QImage>(source->imageData()),SavePath);
      }

@@ -119,7 +119,10 @@
    <addaction name="actionAlignCenter"/>
    <addaction name="actionAlignRight"/>
    <addaction name="actionAlignJustify"/>
-   <addaction name="actionTextColor"/>
+   <addaction name="separator"/>
+   <addaction name="actionSetColor"/>
+   <addaction name="actionDefColor"/>
+   <addaction name="separator"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidget">
@@ -413,6 +416,16 @@
   <action name="actionTextColor">
    <property name="text">
     <string>Color</string>
+   </property>
+  </action>
+  <action name="actionSetColor">
+   <property name="text">
+    <string>setColor</string>
+   </property>
+  </action>
+  <action name="actionDefColor">
+   <property name="text">
+    <string>DefColor</string>
    </property>
   </action>
  </widget>
