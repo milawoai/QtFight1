@@ -235,12 +235,23 @@ bool MdiChild::loadFile(const QString &fileName)
      {
          if(event->key() == Qt::Key_V)
          {
+             //QTextCharFormat format = (this->textCursor()).charFormat();
              this->paste();
+//             (this->textCursor()).mergeCharFormat(format);
+//             this->mergeCurrentCharFormat(format);
+         }
+         else if(event->key() == Qt::Key_G)
+         {
+             QTextCharFormat format = (this->textCursor()).charFormat();
+             this->paste();
+             (this->textCursor()).mergeCharFormat(format);
+             this->mergeCurrentCharFormat(format);
          }
          else QTextEdit::keyPressEvent(event);
      }
      else if(event->key() == Qt::Key_Return)
      {
+         //this->insertPlainText("    ");
          QTextEdit::keyPressEvent(event);
      }
      else
