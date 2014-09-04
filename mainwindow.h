@@ -133,6 +133,14 @@ private slots:
 
     void on_actionDefColor_triggered();
 
+    void on_action_4_triggered();
+
+    void on_action_5_triggered();
+
+    void on_action_6_triggered();
+
+    void on_actionW_triggered();
+
 private:
 
     Ui::MainWindow *ui;
@@ -153,7 +161,7 @@ private:
     int  id_Hour;
     QSystemTrayIcon *trayicon;
     QMenu *trayiconMenu;
-    QDir *DataDir;
+
     QColor posColor;
 
     bool TrayResult;
@@ -167,8 +175,11 @@ private:
     void setupTextActions();
     void colorChanged(const QColor &c);
 
-
-
+    //文件路径
+    QString dataPath;//存放每日记录
+    QString targetPath;//存放目标文件
+    QString backgroundPath;//背景图文件
+    QString backgroundPath2;//背景图文件
 };
 
 #endif // MAINWINDOW_H

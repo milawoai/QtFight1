@@ -46,12 +46,23 @@
     <property name="title">
      <string>编辑(&amp;E)</string>
     </property>
+    <widget class="QMenu" name="menu_2">
+     <property name="title">
+      <string>目录</string>
+     </property>
+     <addaction name="action_4"/>
+     <addaction name="action_5"/>
+     <addaction name="action_6"/>
+     <addaction name="actionW"/>
+    </widget>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
     <addaction name="separator"/>
     <addaction name="actionCut"/>
     <addaction name="actionCopy"/>
     <addaction name="actionPaste"/>
+    <addaction name="separator"/>
+    <addaction name="menu_2"/>
    </widget>
    <widget class="QMenu" name="menu_W">
     <property name="title">
@@ -426,6 +437,26 @@
   <action name="actionDefColor">
    <property name="text">
     <string>DefColor</string>
+   </property>
+  </action>
+  <action name="action_4">
+   <property name="text">
+    <string>每日记录</string>
+   </property>
+  </action>
+  <action name="action_5">
+   <property name="text">
+    <string>目标文件</string>
+   </property>
+  </action>
+  <action name="action_6">
+   <property name="text">
+    <string>背景图</string>
+   </property>
+  </action>
+  <action name="actionW">
+   <property name="text">
+    <string>Word背景图</string>
    </property>
   </action>
  </widget>

@@ -47,12 +47,49 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setupTextActions();
 
-    DataDir = new QDir("C:/Users/Administrator/Desktop/data");
 
 
+    QFile Dir_file("Dir.dat");
+    if (!Dir_file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        dataPath = "C:/Users/Administrator/Desktop/data";
+        targetPath = "C:/Users/Administrator/Desktop/data/target";
+        backgroundPath = "F:/pro/Resource";
+        backgroundPath2 = "F:\\pro\\QtFight1\\images\\background";
+
+    }
+    else
+    {
+        QTextStream in(&Dir_file);
+        dataPath = in.readLine();
+        targetPath = in.readLine();
+        backgroundPath = in.readLine();
+        backgroundPath2 = in.readLine();
+        if(dataPath=="")
+        {
+            dataPath = "C:/Users/Administrator/Desktop/data";
+        }
+        if(targetPath=="")
+        {
+            targetPath = "C:/Users/Administrator/Desktop/data/target";
+        }
+        if(backgroundPath=="")
+        {
+             backgroundPath = "F:/pro/Resource";
+        }
+        if(backgroundPath2=="")
+        {
+            backgroundPath2 = "F:\\pro\\QtFight1\\images\\background";
+        }
+
+    }
+
+
+
+    QDir *DataDir = new QDir(dataPath);
 //***************背景制造*****************
     int backgroundCount;
-    QDir dir="F:/pro/Resource";
+    QDir dir(backgroundPath);
     QStringList filter;
     filter<<"*.jpg";
     dir.setNameFilters(filter);
@@ -69,7 +106,7 @@ MainWindow::MainWindow(QWidget *parent) :
     delete fileInfo;
 
 //***************NewWord制造*****************
-    QDir dir_B="F:\\pro\\QtFight1\\images\\background";
+    QDir dir_B(backgroundPath2);
     dir_B.setNameFilters(filter);
     fileInfo=new QList<QFileInfo>(dir_B.entryInfoList(filter));
     if((backgroundCount = fileInfo->count())>0)
@@ -193,7 +230,7 @@ MainWindow::MainWindow(QWidget *parent) :
      animation->setEndValue(1);
      animation->start();
 
-
+     delete DataDir;
 }
 MainWindow::~MainWindow()
 {
@@ -563,7 +600,6 @@ void MainWindow::on_actionClose_triggered()
      ui->mdiArea->closeActiveSubWindow();
 }
 
-
 void MainWindow::updateWindowMenu()
 {
     ui->menu_W->clear(); // 先清空菜单，然后再添加各个菜单动作
@@ -894,7 +930,19 @@ void MainWindow::writeSettings() // 写入窗口设置
     settings.setValue("pos", pos());   // 写入位置信息
     settings.setValue("size", size()); // 写入大小信息
     //settings.setValue("Label",);
+//写入使用的目录
+    QFile Dir_file("Dir.dat");
+    if (!Dir_file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
 
+    QTextStream Dir_out(&Dir_file);
+    Dir_out<<dataPath<<endl;
+    Dir_out<<targetPath<<endl;
+    Dir_out<<backgroundPath<<endl;
+    Dir_out<<backgroundPath2<<endl;
+
+
+//写入更新标签用的信息
     QFile file("Label.dat");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
@@ -1002,6 +1050,11 @@ void MainWindow::initWindow() // 初始化窗口
         QString line = in.readLine();
         updateLabelMenu(line.split('\\'));
     }
+
+    QFile Dir_file("Dir.dat");
+    if (!Dir_file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return;
+
     QPixmap pix(16, 16);
     pix.fill(Qt::black);
     ui->actionTextColor->setIcon(pix);
@@ -1297,4 +1350,24 @@ void MainWindow::on_actionDefColor_triggered()
         fmt.setForeground(QColor(Qt::black));
         activeMdiChild()->mergeFormatOnWordOrSelection2(fmt);
     }
+}
+
+void MainWindow::on_action_4_triggered()
+{
+    dataPath = QFileDialog::getExistingDirectory(this);
+}
+
+void MainWindow::on_action_5_triggered()
+{
+    targetPath = QFileDialog::getExistingDirectory(this);
+}
+
+void MainWindow::on_action_6_triggered()
+{
+    backgroundPath = QFileDialog::getExistingDirectory(this);
+}
+
+void MainWindow::on_actionW_triggered()
+{
+    backgroundPath2 = QFileDialog::getExistingDirectory(this);
 }
