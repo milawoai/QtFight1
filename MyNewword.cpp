@@ -7,6 +7,7 @@ NewWord::NewWord(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::NewWord)
 {
+    setAttribute(Qt::WA_DeleteOnClose);// 这样可以在子窗口关闭时销毁这个类的对象
     ui->setupUi(this);
 }
 

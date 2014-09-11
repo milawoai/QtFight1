@@ -18,16 +18,18 @@ public:
     QString userFriendlyCurrentFile();
     QString currentFile(){return curFile;}
 protected:
+    void mousePressEvent(QMouseEvent * e);
     void closeEvent(QCloseEvent *event);
     void keyPressEvent(QKeyEvent* event);
     bool canInsertFromMimeData(const QMimeData * source) const;
     void insertFromMimeData(const QMimeData* source);
 signals:
-
+    void MousePressFont(QTextCharFormat);
 public slots:
     void paste();
 private slots:
     void documentWasModified();
+
 
 private:
     bool maybeSave();

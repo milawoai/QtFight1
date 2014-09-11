@@ -138,7 +138,6 @@ MainWindow::MainWindow(QWidget *parent) :
     int minute = NowTime.minute();
     //int hour = NowTime.hour();
     int second = NowTime.second();
-
     QDate NowDate = QDate::currentDate();
     QString toDayFile = NowDate.toString("yyyy-MM-dd");
     //qDebug()<<toDayFile;
@@ -642,9 +641,7 @@ void MainWindow::updateLabelMenu(QStringList str)//更新Label列表
     QStringList::const_iterator constIterator = str.begin();
     foreach (actiontemp, actionList) {
         QString strTemp = actiontemp->text();
-        //qDebug()<<strTemp;
         QString trsCon = *(constIterator);
-        //qDebug()<<trsCon;
         if(strTemp == trsCon)
         {
             constIterator++;
@@ -664,7 +661,6 @@ void MainWindow::updateLabelMenu(QStringList str)//更新Label列表
             {
                result = actiontemp;
             }
-
         }
     }
     if(flag)
@@ -697,7 +693,6 @@ void MainWindow::updateLabelMenu(QStringList str)//更新Label列表
                 constIterator++;
             }
             actionCreate =  First->addAction(*(constIterator));
-
             ROOTMenu->addAction(ComingIn);
         }
         else

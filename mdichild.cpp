@@ -15,11 +15,13 @@
 #include <QMimeData>
 #include <QImageReader>
 #include <QDateTime>
+#include <QTextBlock>
 
 MdiChild::MdiChild(QWidget *parent) :
     QTextEdit(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);// 这样可以在子窗口关闭时销毁这个类的对象
+    connect(this,SIGNAL(MousePressFont(QTextCharFormat)),parent,SLOT(getMousePressFont(QTextCharFormat)));
     isUntitled = true; 
 }
 
@@ -145,6 +147,14 @@ bool MdiChild::loadFile(const QString &fileName)
      return QFileInfo(curFile).fileName(); // 从文件路径中提取文件名
  }
 
+ void MdiChild::mousePressEvent(QMouseEvent *e)
+ {
+     QTextCharFormat format = (this->textCursor()).charFormat();
+
+     emit MousePressFont(format);
+     QTextEdit::mousePressEvent(e);
+ }
+
  // 保存操作
  bool MdiChild::save()
  {
@@ -193,8 +203,6 @@ bool MdiChild::loadFile(const QString &fileName)
 //         this->document()->setModified(false);
 //     }
 //     return success;
-
-
      return true;
  }
 
@@ -243,16 +251,38 @@ bool MdiChild::loadFile(const QString &fileName)
          else if(event->key() == Qt::Key_G)
          {
              QTextCharFormat format = (this->textCursor()).charFormat();
+             QTextBlockFormat Blockformat = (this->textCursor()).blockFormat();
              this->paste();
+             QTextBlockFormat nextBlockformat = (this->textCursor()).blockFormat();
+             if(nextBlockformat!=Blockformat)
+             {
+                 this->append("");
+             }
              (this->textCursor()).mergeCharFormat(format);
+             (this->textCursor()).setBlockFormat(Blockformat);
              this->mergeCurrentCharFormat(format);
+
          }
          else QTextEdit::keyPressEvent(event);
      }
      else if(event->key() == Qt::Key_Return)
      {
          //this->insertPlainText("    ");
+         QTextBlock textBlock = (this->textCursor()).block();
+         QString qs_str = textBlock.text();
+         QString qs_insertStr = "";
+         int i = 0;
+         while(qs_str.at(i).isSpace()||qs_str.at(i) == '\t')
+         {
+             qs_insertStr+=qs_str.at(i);
+             i++;
+         }
+         if(qs_str.simplified().right(5).contains(":")||qs_str.simplified().right(5).contains("："))
+         {
+             qs_insertStr+="    ";
+         }
          QTextEdit::keyPressEvent(event);
+         this->insertPlainText(qs_insertStr);
      }
      else
      {

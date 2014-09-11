@@ -47,6 +47,8 @@ signals:
 
 private slots:
 
+    void getMousePressFont(const QTextCharFormat& format);
+
     void textFamily(const QString &f);
 
     void DeleteAddLabDialog();
@@ -153,6 +155,11 @@ private:
     QString strToDisplay;
     QAction *actionCreate;
     QMenu* ROOTMenu;
+
+    QComboBox *comboStyle;
+    QFontComboBox *comboFont;
+    QComboBox *comboSize;
+
     //QMap<QAction*,QString> ActionToString;
     QList<QSonAction*> SonActionList;
     AddLabDialog* myAddLab;
